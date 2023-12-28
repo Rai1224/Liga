@@ -1,0 +1,214 @@
+#include <iostream>
+#include <cstring>
+using namespace std;
+
+/*Za izradu ovog zadatka kreirati novi projekat u kojem možete koristiti kod iz prethodnog zadatka.
+Kreirati klasu Liga koja sadrži sljedeće podatke članove i metode:
+ pokazivač na niz ekipa (niz objekata klase Ekipa) i njegovu dužinu;
+ metodu za štampanje podataka o svim ekipama u ligi;
+ operator () koji kao argument sadrži string (pokazivač na niz karaktera). Metoda treba da vrati novi objekat liga, u
+kojem se nalaze sve ekipe koje u imenu sarže string proslijeđen kao argument funckije;
+ metodu koja računa prosječni bužet po igraču za cijelu ligu.
+Napomena: U klasi dodati neophodne konstruktore, prijateljstva, destruktor i operatore (koji eventualno nisu navedeni) kako
+bi se obezbijedilo pravilno funkcionisanje zadatih funkcija.
+(4 bodova) Napisati glavni program u kojem ćete demonstrirati rad svih realizovanih funkcija */
+
+class Ekipa
+{
+private:
+    char *ime;
+    int broj;
+    double budzet;
+public:
+    static char *MaxNaziv;
+    static double MaxBudzet;
+    Ekipa(){ime=0;}
+    Ekipa(char *,int, double);
+    Ekipa(const Ekipa &);
+    ~Ekipa(); //destruktor
+    void setBr(int br){broj=br;}
+    void setBudzet(double b)
+    {
+        budzet=b;
+        if(budzet>MaxBudzet)
+        {
+            MaxBudzet=budzet;
+            delete [] MaxNaziv;
+            MaxNaziv=new char[strlen(ime)+1];
+            strcpy(MaxNaziv,ime);
+        }
+    }
+    void setIme(char *Ime)
+    {
+        delete [] ime;
+        ime=new char[strlen(Ime)+1];
+        strcpy(ime,Ime);
+    }
+    int getBr() const {return broj;}
+    double getBudzet() const {return budzet;}
+    char *getIme() const {return ime;}
+    Ekipa  &operator=(const Ekipa &);
+    friend Ekipa operator+(Ekipa A, Ekipa B);
+    Ekipa & operator++();
+    Ekipa operator++(int); //vrati mi vrijednost pa uvijecaj
+    void print ()
+    {
+        cout<<"Ime ekipe: "<<ime<<",broj igraca ekipe: "<<broj<<", budzet je: "<<budzet<<endl;
+    }
+    friend Ekipa veciProsjBudzet(Ekipa A, Ekipa B);
+    friend class Liga;
+};
+
+char *Ekipa:: MaxNaziv=0;
+double Ekipa::MaxBudzet=0;
+Ekipa::Ekipa(char *Ime, int br, double b)
+{
+    broj=br;
+    budzet=b;
+    ime=new char[strlen(Ime)+1];
+    strcpy(ime,Ime);
+    if(budzet>MaxBudzet)
+    {
+        MaxBudzet=budzet;
+        delete [] MaxNaziv;
+        MaxNaziv=new char[strlen(ime)+1];
+        strcpy(MaxNaziv,ime);
+    }
+}
+Ekipa::Ekipa(const Ekipa &X)
+{
+    broj=X.broj;
+    budzet=X.budzet;
+    ime=new char[strlen(X.ime)+1];
+    strcpy(ime,X.ime);
+}
+Ekipa::~Ekipa() //destruktor
+{
+    delete [] ime;
+    ime=0;
+}
+Ekipa &Ekipa::operator=(const Ekipa &X)
+{
+    if(this!= &X)
+    {
+        broj=X.broj;
+        budzet=X.budzet;
+        delete [] ime;
+        ime=new char[strlen(X.ime)+1];
+        strcpy(ime,X.ime);
+    }
+    return *this;
+}
+
+Ekipa operator+(Ekipa A, Ekipa B)
+{
+    Ekipa rez;
+    if(A.budzet>=B.budzet)
+    {
+        rez.ime=new char[strlen(A.ime)+1];
+        strcpy(rez.ime,A.ime);
+    }
+    else
+    {
+        rez.ime=new char[strlen(B.ime)+1];
+        strcpy(rez.ime,B.ime);
+    }
+    rez.budzet=A.budzet+B.budzet;
+    rez.broj=A.broj+B.broj;
+    return rez;
+}
+Ekipa &Ekipa::operator++()
+{
+    broj++;
+    return *this;
+}
+Ekipa Ekipa::operator++(int)
+{
+    Ekipa temp(*this);
+    broj++;
+    return temp;
+}
+Ekipa veciProsjBudzet(Ekipa A,Ekipa B)
+{
+    if((A.budzet/A.broj)>=(B.budzet/B.broj))
+    {
+        return A;
+    }
+    else
+    {
+        return B;
+    }
+
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+class Liga
+{
+private:
+    Ekipa *X;
+    int N;
+public:
+    void stampaj()
+    {
+        for(int i=0;i<N;i++)
+            X[i].print();
+    }
+    Liga():X(0){}
+    Liga(Ekipa *A,int n)
+    {
+        X=new Ekipa[n];
+        for(int i=0;i<n;i++)
+            X[i]=A[i];
+            N=n;
+    }
+    ~Liga()
+    {
+        delete [] X;
+        X=0;
+    }
+    Liga(const Liga &T)
+    {
+        X=new Ekipa[T.N];
+        for(int i=0;i<T.N;i++)
+            X[i]=T.X[i];
+            N=T.N;
+    }
+    friend double sum(Ekipa *,int );
+    Liga operator()(char*);
+};
+
+    double sum(Ekipa *ekipa,int n)
+    {
+        double sum=0;
+        for(int i=0;i<n;i++)
+            sum+=ekipa[i].getBudzet();
+            return sum;
+    }
+    Liga Liga::operator()(char* S)
+    {
+        Ekipa *result=new Ekipa[N];
+        int j=0;
+        for(int i=0;i<N;i++)
+        {
+            if(strcmp(S,X[i].getIme())==0)
+                result[j++]=X[i];
+        }
+        N=j;
+        Liga A(result,N);
+        return A;
+    }
+int main()
+{
+    Ekipa A("Mancester", 11, 20000);
+    Ekipa B("Barselona", 12, 30000);
+    Ekipa C("Liverpul", 14, 40000);
+    Ekipa *nizEkipa=new Ekipa[3];
+    nizEkipa[0]=A;
+    nizEkipa[1]=B;
+    nizEkipa[2]=C;
+    Liga D(nizEkipa,3);
+    double suma;
+    suma=sum(nizEkipa,3);
+    cout<<"Suma budzeta ekipa je :"<<suma<<endl;
+    Liga F=D("Liverpul");
+    F.stampaj();
+}
